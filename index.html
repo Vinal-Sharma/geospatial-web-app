@@ -1,410 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geospatial Toolkit</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Geospatial Dashboard</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
-    <style>
+    <!-- MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 
-        /* ---------------- GLOBAL STYLES ---------------- */
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Arial;
-            background: #dceeff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+    <!-- External CSS file -->
+    <link rel="stylesheet" href="style.css">
 
-        h2 {
-            margin: 5px 0;
-            color: #013a63;
-        }
-
-        /* ---------------- NAVBAR ---------------- */
-        .navbar {
-            width: 100%;
-            background: #0276d6;
-            padding: 12px;
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
-
-        .nav-item {
-            color: white;
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: 500;
-        }
-
-        .nav-item:hover {
-            background: #015bb1;
-        }
-
-        /* ---------------- PANEL ---------------- */
-        .panel {
-            width: 95%;
-            max-width: 950px;
-            margin-top: 15px;
-            background: white;
-            padding: 18px;
-            border-radius: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-            display: none; /* hidden by default */
-        }
-
-        input[type="text"] {
-            width: 250px;
-            padding: 10px;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            font-size: 15px;
-            margin: 5px 0;
-        }
-
-        button {
-            padding: 10px 18px;
-            background: #0276d6;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-            margin-left: 5px;
-        }
-
-        button:hover {
-            background: #015bb1;
-        }
-
-        #map {
-            margin-top: 15px;
-            height: 520px;
-            width: 95%;
-            max-width: 1000px;
-            border-radius: 15px;
-            border: 2px solid #9cc6f1;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        #status-message {
-            margin-top: 10px;
-            font-weight: bold;
-            height: 20px;
-            text-align: center;
-            color: #013a63;
-        }
-
-    </style>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 
-<body>
+<body data-theme="dark">
 
-    <h2>Geospatial Web Application</h2>
-
-    <!-- ---------------- NAV BAR ---------------- -->
-    <div class="navbar">
-        <div class="nav-item" onclick="openPanel('searchPanel')">Search</div>
-        <div class="nav-item" onclick="openPanel('distancePanel')">Distance</div>
-        <div class="nav-item" onclick="openPanel('areaPanel')">Area</div>
-        <div class="nav-item" onclick="openPanel('routePanel')">Route</div>
-        <div class="nav-item" onclick="openPanel('nearbyPanel')">Nearby</div>
-        <div class="nav-item" onclick="clearEverything()">Clear All</div>
+<!-- NAV BAR -->
+<div class="topbar">
+    <div class="brand">
+        <div class="logo">VS</div>
+        <div>
+            <div class="main-title">Geospatial Dashboard</div>
+            <div class="sub-title">GIS • Web Mapping • Data Visualization</div>
+        </div>
     </div>
 
-    <!-- ---------------- PANELS ---------------- -->
+    <div class="controls">
+        <button class="btn" id="themeToggle">Theme</button>
+        <button class="btn secondary" id="clearAll">Clear All</button>
+    </div>
+</div>
 
-    <!-- SEARCH -->
-    <div class="panel" id="searchPanel">
-        <input type="text" id="searchInput" placeholder="Search a place...">
-        <button onclick="searchLocation()">Search</button>
-        <button onclick="trackMe()">Track Me</button>
+<!-- LAYOUT -->
+<div class="container">
+
+    <!-- Left panel -->
+    <div class="sidebar">
+
+        <h3>Search & Navigation</h3>
+        <div class="row">
+            <input id="searchInput" class="input" placeholder="Search location">
+            <button class="btn" id="searchBtn">Search</button>
+        </div>
+
+        <div class="row">
+            <button class="btn secondary" id="trackMe">Track Me</button>
+        </div>
+
+        <h3>Basemap</h3>
+        <select id="basemapSelect" class="input">
+            <option value="osm">OpenStreetMap</option>
+            <option value="sat">Esri Satellite</option>
+            <option value="terrain">Stamen Terrain</option>
+        </select>
+
+        <h3>Upload Dataset</h3>
+        <div class="upload">
+            <label class="btn upload-btn" for="fileInput">Choose File</label>
+            <input type="file" id="fileInput" accept=".csv,.geojson,.json,.tif,.shp,.zip">
+            <div id="fileInfo" class="info">Supported: CSV, GeoJSON, SHP (.zip), TIF</div>
+        </div>
+
+        <h3>Distance</h3>
+        <div class="row">
+            <input id="distA" class="input" placeholder="Place A">
+            <input id="distB" class="input" placeholder="Place B">
+        </div>
+        <button class="btn" id="distBtn">Calculate Distance</button>
+
+        <h3>Area Measurement</h3>
+        <div class="row">
+            <button class="btn" id="areaStart">Start Area</button>
+            <button class="btn secondary" id="areaReset">Reset</button>
+        </div>
+
+        <h3>Route</h3>
+        <div class="row">
+            <input id="routeStart" class="input" placeholder="Start">
+            <input id="routeEnd" class="input" placeholder="End">
+        </div>
+        <button class="btn" id="routeBtn">Get Route</button>
+
+        <h3>Nearby Search</h3>
+        <div class="row">
+            <input id="nearbyTerm" class="input" placeholder="cafe, hospital, atm...">
+            <button class="btn" id="nearbyBtn">Search</button>
+        </div>
+
+        <div id="status" class="status">Ready</div>
+
     </div>
 
-    <!-- DISTANCE -->
-    <div class="panel" id="distancePanel">
-        <input type="text" id="pointA" placeholder="Location A">
-        <input type="text" id="pointB" placeholder="Location B">
-        <button onclick="calculateDistance()">Distance</button>
-    </div>
-
-    <!-- AREA -->
-    <div class="panel" id="areaPanel">
-        <button onclick="startAreaMeasure()">Start Drawing Area</button>
-        <button onclick="resetArea()">Reset Area</button>
-    </div>
-
-    <!-- ROUTE -->
-    <div class="panel" id="routePanel">
-        <input type="text" id="routeStart" placeholder="Start">
-        <input type="text" id="routeEnd" placeholder="End">
-        <button onclick="getRoute()">Route</button>
-    </div>
-
-    <!-- NEARBY -->
-    <div class="panel" id="nearbyPanel">
-        <input type="text" id="nearbyType" placeholder="hospital, cafe, atm...">
-        <button onclick="searchNearby()">Find Nearby</button>
-    </div>
-
-    <div id="status-message"></div>
-
+    <!-- Map -->
     <div id="map"></div>
 
+</div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- LIBRARIES -->
 
-    <script>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-        /* ---------------- PANEL FUNCTION ---------------- */
-        function openPanel(id) {
-            document.querySelectorAll(".panel").forEach(p => p.style.display = "none");
-            document.getElementById(id).style.display = "block";
-        }
+<!-- MarkerCluster JS -->
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-        /* ---------------- MAP INITIALIZATION ---------------- */
-        const map = L.map("map").setView([20, 0], 2);
+<!-- SHP support -->
+<script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19
-        }).addTo(map);
+<!-- TIF raster support -->
+<script src="https://unpkg.com/geotiff/dist/geotiff.browser.min.js"></script>
+<script src="https://unpkg.com/georaster/dist/georaster.browser.bundle.min.js"></script>
+<script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script>
 
-        let currentMarker = null;
-        let areaPoints = [];
-        let areaPolygon = null;
-        let areaMode = false;
-        let routeLine = null;
-        let nearbyMarkers = [];
+<!-- CSV parser -->
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 
-        const statusMsg = document.getElementById("status-message");
-
-
-        /* ---------------- SEARCH ---------------- */
-        async function searchLocation() {
-
-            const query = document.getElementById("searchInput").value.trim();
-            if (!query) { statusMsg.innerText = "Enter a place"; return; }
-
-            const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1`);
-            const data = await res.json();
-
-            if (!data.features.length) {
-                statusMsg.innerText = "Place not found";
-                statusMsg.style.color = "red";
-                return;
-            }
-
-            const lat = data.features[0].geometry.coordinates[1];
-            const lon = data.features[0].geometry.coordinates[0];
-
-            if (currentMarker) map.removeLayer(currentMarker);
-            currentMarker = L.marker([lat, lon]).addTo(map).bindPopup(query).openPopup();
-
-            map.setView([lat, lon], 12);
-
-            statusMsg.innerText = "Location found!";
-            statusMsg.style.color = "green";
-        }
-
-        /* ---------------- TRACK ME ---------------- */
-        function trackMe() {
-            statusMsg.innerText = "Finding your location...";
-            navigator.geolocation.getCurrentPosition((pos) => {
-
-                const lat = pos.coords.latitude;
-                const lon = pos.coords.longitude;
-
-                if (currentMarker) map.removeLayer(currentMarker);
-                currentMarker = L.marker([lat, lon]).addTo(map).bindPopup("You are here").openPopup();
-
-                map.setView([lat, lon], 14);
-
-                statusMsg.innerText = "Location tracked!";
-                statusMsg.style.color = "green";
-            });
-        }
-
-        /* ---------------- DISTANCE ---------------- */
-        async function calculateDistance() {
-            const A = document.getElementById("pointA").value.trim();
-            const B = document.getElementById("pointB").value.trim();
-
-            async function geocode(place) {
-                const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(place)}&limit=1`);
-                const d = await r.json();
-                if (!d.features.length) return null;
-                return [d.features[0].geometry.coordinates[1], d.features[0].geometry.coordinates[0]];
-            }
-
-            const p1 = await geocode(A);
-            const p2 = await geocode(B);
-
-            if (!p1 || !p2) {
-                statusMsg.innerText = "Cannot find one of the locations";
-                statusMsg.style.color = "red";
-                return;
-            }
-
-            const R = 6371;
-            const dLat = (p2[0] - p1[0]) * Math.PI/180;
-            const dLon = (p2[1] - p1[1]) * Math.PI/180;
-
-            const a = Math.sin(dLat/2)**2 +
-                      Math.cos(p1[0]*Math.PI/180) *
-                      Math.cos(p2[0]*Math.PI/180) *
-                      Math.sin(dLon/2)**2;
-
-            const dist = 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-            statusMsg.innerText = `Distance: ${dist.toFixed(2)} km`;
-            statusMsg.style.color = "green";
-        }
-
-        /* ---------------- AREA MEASUREMENT ---------------- */
-        map.on("click", (e) => {
-            if (!areaMode) return;
-
-            areaPoints.push([e.latlng.lat, e.latlng.lng]);
-
-            if (areaPolygon) map.removeLayer(areaPolygon);
-
-            areaPolygon = L.polygon(areaPoints, { color: "blue", fillOpacity: 0.3 }).addTo(map);
-
-            if (areaPoints.length >= 3) {
-                const area = polygonArea(areaPoints);
-                statusMsg.innerText = `Area: ${area.toFixed(2)} sq km`;
-                statusMsg.style.color = "green";
-            }
-        });
-
-        function polygonArea(points) {
-            const R = 6371;
-            let sum = 0;
-
-            for (let i = 0; i < points.length; i++) {
-                let j = (i + 1) % points.length;
-
-                sum += (points[j][1] - points[i][1]) *
-                       (2 + Math.sin(points[i][0] * Math.PI/180) +
-                            Math.sin(points[j][0] * Math.PI/180));
-            }
-            return Math.abs(sum * R * R / 2);
-        }
-
-        function startAreaMeasure() {
-            areaMode = true;
-            areaPoints = [];
-            if (areaPolygon) map.removeLayer(areaPolygon);
-            statusMsg.innerText = "Click on map to draw polygon";
-        }
-
-        function resetArea() {
-            areaMode = false;
-            areaPoints = [];
-            if (areaPolygon) map.removeLayer(areaPolygon);
-            statusMsg.innerText = "";
-        }
-
-        /* ---------------- ROUTE ---------------- */
-        async function getRoute() {
-            const A = document.getElementById("routeStart").value.trim();
-            const B = document.getElementById("routeEnd").value.trim();
-
-            async function geocode(place) {
-                const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(place)}&limit=1`);
-                const d = await r.json();
-                if (!d.features.length) return null;
-                return {
-                    lat: d.features[0].geometry.coordinates[1],
-                    lon: d.features[0].geometry.coordinates[0]
-                };
-            }
-
-            const start = await geocode(A);
-            const end = await geocode(B);
-
-            if (!start || !end) {
-                statusMsg.innerText = "Cannot find start/end";
-                statusMsg.style.color = "red";
-                return;
-            }
-
-            const url = `https://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full&geometries=geojson`;
-
-            const res = await fetch(url);
-            const data = await res.json();
-
-            if (routeLine) map.removeLayer(routeLine);
-
-            const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-
-            routeLine = L.polyline(coords, { color: "blue", weight: 4 }).addTo(map);
-            map.fitBounds(routeLine.getBounds());
-
-            statusMsg.innerText = `Route distance: ${(data.routes[0].distance/1000).toFixed(2)} km`;
-            statusMsg.style.color = "green";
-        }
-
-        /* ---------------- NEARBY SEARCH ---------------- */
-        async function searchNearby() {
-            const type = document.getElementById("nearbyType").value.trim();
-            if (!currentMarker) {
-                statusMsg.innerText = "Search a place or track yourself first.";
-                statusMsg.style.color = "red";
-                return;
-            }
-
-            const lat = currentMarker.getLatLng().lat;
-            const lon = currentMarker.getLatLng().lng;
-
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(type)}&limit=15&bounded=1&viewbox=${lon-0.2},${lat+0.2},${lon+0.2},${lat-0.2}`;
-
-            const res = await fetch(url);
-            const data = await res.json();
-
-            nearbyMarkers.forEach(m => map.removeLayer(m));
-            nearbyMarkers = [];
-
-            data.forEach(place => {
-                let m = L.marker([place.lat, place.lon]).addTo(map)
-                    .bindPopup(place.display_name);
-                nearbyMarkers.push(m);
-            });
-
-            statusMsg.innerText = `${data.length} places found`;
-            statusMsg.style.color = "green";
-        }
-
-        /* ---------------- CLEAR EVERYTHING ---------------- */
-        function clearEverything() {
-            if (currentMarker) map.removeLayer(currentMarker);
-            if (areaPolygon) map.removeLayer(areaPolygon);
-            if (routeLine) map.removeLayer(routeLine);
-
-            nearbyMarkers.forEach(m => map.removeLayer(m));
-            nearbyMarkers = [];
-
-            areaPoints = [];
-            areaMode = false;
-
-            currentMarker = null;
-            areaPolygon = null;
-            routeLine = null;
-
-            statusMsg.innerText = "";
-        }
-
-    </script>
+<!-- OUR SCRIPT -->
+<script src="script.js"></script>
 
 </body>
 </html>
